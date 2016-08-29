@@ -10,7 +10,7 @@ import logging
 
 from socket import socket, AF_INET6, AF_INET, create_connection
 from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED, cert_time_to_seconds, SSLError, CertificateError, create_default_context
-from unbound import ub_ctx, idn2dname, ub_strerror
+from unbound import ub_ctx, ub_strerror
 
 from check_dane.tlsa import verify_tlsa_record
 from check_dane.cert import verify_certificate, add_certificate_options
