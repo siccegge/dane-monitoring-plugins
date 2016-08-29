@@ -1,3 +1,12 @@
+# Scope
+
+The set of monitoring plugins in this repository is intended to serve
+as icinga / nagios / .. checks for DANE enabled network services. The
+central functionality therefore is checking whether the services
+conforms with the DANE records. However, all service plugins are also
+supposed to work as *the* plugin for each service and should be able
+to monitor all relevant properties.
+
 # Getting the Code
 
 The main repository is located at [git.siccegge.de][1] but mirrors can
