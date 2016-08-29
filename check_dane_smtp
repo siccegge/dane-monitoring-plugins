@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+#
+#
+
+from __future__ import print_function
+
+import sys
+import argparse
+
+from socket import socket, AF_INET6, AF_INET, create_connection
+from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED, cert_time_to_seconds, SSLError, CertificateError, create_default_context
+from unbound import ub_ctx, idn2dname, ub_strerror
+
+from check_dane.tlsa import verify_tlsa_record
+
+def init_connection(sslcontext, args):
+    host = args.Host
+
+    if args.ssl:
+        port = 465 if args.port == 0 else args.port
+        connection = context.wrap_socket(socket(AF_INET),
+                                         server_hostname=host)
+        connection.connect(host, port)
+
+    else:
+        port = 25 if args.port == 0 else args.port
+        connection = create_connection((host, port))
+        print(connection.recv(512))
+        connection.send(b"EHLO localhost\r\n")
+        print(connection.recv(512))
+        connection.send(b"STARTTLS\r\n")
+        print(connection.recv(512))
+        connection = sslcontext.wrap_socket(connection, server_hostname=host)
+        connection.do_handshake()
+
+    return connection
+
+
+def close_connection(connection):
+    connection.send(b"QUIT\r\n")
+    print(connection.recv(512))
+
+
+def init(args):
+    sslcontext = SSLContext(PROTOCOL_TLSv1_2)
+    sslcontext.verify_mode = CERT_REQUIRED
+    sslcontext.load_verify_locations(args.castore)
+
+    resolver = ub_ctx()
+    resolver.add_ta_file(args.ancor)
+
+    return sslcontext, resolver
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("Host")
+
+    parser.add_argument("-p", "--port",
+                        action="store", type=int, default=0,
+                        help="SMTP port")
+    parser.add_argument("--ssl",
+                        action="store_true",
+                        help="Use direct TLS connection instead of starttls (default: disabled)")
+    parser.add_argument("--check-dane",
+                        action="store_false",
+                        help="Verify presented certificate via DANE (default: enabled)")
+    parser.add_argument("--check-ca",
+                        action="store_false",
+                        help="Verify presented certificate via the CA system (default: enabled)")
+    parser.add_argument("--check-expire",
+                        action="store_false",
+                        help="Verify presented certificate for expiration (default: enabled)")
+
+    parser.add_argument("-a", "--ancor",
+                        action="store", type=str, default="/etc/unbound/root.key",
+                        help="DNSSEC root ancor")
+    parser.add_argument("--castore", action="store", type=str,
+                        default="/etc/ssl/certs/ca-certificates.crt",
+                        help="ca certificate bundle")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-6", "--6", action="store_true", help="check via IPv6 only")
+    group.add_argument("-4", "--4", action="store_true", help="check via IPv4 only")
+    group.add_argument("--64", action="store_false", help="check via IPv4 and IPv6 (default)")
+
+    args = parser.parse_args()
+    sslcontext, resolver = init(args)
+    print(args)
+
+    connection = init_connection(sslcontext, args)
+
+    verify_tlsa_record(resolver, "_25._tcp.%s" % args.Host, connection.getpeercert(binary_form=True))
+
+    close_connection(connection)
+
+
+if __name__ == '__main__':
+   main()
