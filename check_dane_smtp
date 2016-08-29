@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import sys
 import argparse
+import logging
 
 from socket import socket, AF_INET6, AF_INET, create_connection
 from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED, cert_time_to_seconds, SSLError, CertificateError, create_default_context
@@ -18,18 +19,25 @@ def init_connection(sslcontext, args):
 
     if args.ssl:
         port = 465 if args.port == 0 else args.port
-        connection = context.wrap_socket(socket(AF_INET),
-                                         server_hostname=host)
-        connection.connect(host, port)
+        connection = sslcontext.wrap_socket(socket(AF_INET),
+                                            server_hostname=host)
+        connection.connect((host, port))
 
     else:
         port = 25 if args.port == 0 else args.port
+
         connection = create_connection((host, port))
-        print(connection.recv(512))
+        answer = connection.recv(512)
+        logging.debug(answer)
+
         connection.send(b"EHLO localhost\r\n")
-        print(connection.recv(512))
+        answer = connection.recv(512)
+        logging.debug(answer)
+
         connection.send(b"STARTTLS\r\n")
-        print(connection.recv(512))
+        answer = connection.recv(512)
+        logging.debug(answer)
+
         connection = sslcontext.wrap_socket(connection, server_hostname=host)
         connection.do_handshake()
 
@@ -38,7 +46,8 @@ def init_connection(sslcontext, args):
 
 def close_connection(connection):
     connection.send(b"QUIT\r\n")
-    print(connection.recv(512))
+    answer = connection.recv(512)
+    logging.debug(answer)
 
 
 def init(args):
@@ -53,9 +62,12 @@ def init(args):
 
 
 def main():
+    logging.basicConfig(format='%(levelname)5s %(message)s')
     parser = argparse.ArgumentParser()
     parser.add_argument("Host")
 
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     parser.add_argument("-p", "--port",
                         action="store", type=int, default=0,
                         help="SMTP port")
@@ -85,14 +97,30 @@ def main():
     group.add_argument("--64", action="store_false", help="check via IPv4 and IPv6 (default)")
 
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif args.quiet:
+        logging.getLogger().setLevel(logging.WARNING)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    port = args.port
+    if port == 0:
+        port = 465 if args.ssl else 25
+    host = args.Host.encode('idna').decode()
+
     sslcontext, resolver = init(args)
-    print(args)
+    try:
+        connection = init_connection(sslcontext, args)
+    except ConnectionRefusedError:
+        logging.error("Connection refused")
+        return 2
 
-    connection = init_connection(sslcontext, args)
-
-    verify_tlsa_record(resolver, "_25._tcp.%s" % args.Host, connection.getpeercert(binary_form=True))
+    retval = verify_tlsa_record(resolver, "_%d._tcp.%s" % (port, host), connection.getpeercert(binary_form=True))
 
     close_connection(connection)
+    return retval
 
 
 if __name__ == '__main__':

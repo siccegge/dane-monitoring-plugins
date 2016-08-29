@@ -3,19 +3,27 @@
 import sys
 import codecs
 import hashlib
+import logging
 
 from .cert import get_spki
 
 from unbound import RR_TYPE_A, RR_TYPE_AAAA
 from unbound import idn2dname, ub_strerror
 
+try:
+    from unbound import RR_TYPE_TLSA
+except ImportError:
+    RR_TYPE_TLSA=52
+
 def verify_tlsa_record(resolver, record, certificate):
-    print(record)
-    print(hashlib.sha256(certificate).hexdigest())
-    s, r = resolver.resolve(record, rrtype=52)
+    s, r = resolver.resolve(record, rrtype=RR_TYPE_TLSA)
     if 0 != s:
         ub_strerror(s)
         return
+
+    if r.data is None:
+        logging.error("No TLSA record returned")
+        return 2
 
     for record in r.data.data:
         hexencoder = codecs.getencoder('hex')
@@ -25,7 +33,7 @@ def verify_tlsa_record(resolver, record, certificate):
         data = record[3:]
 
         if usage != 3:
-            sys.stderr.write("Only 'Domain-issued certificate' records supported\n")
+            logging.warning("Only 'Domain-issued certificate' records supported\n")
 
         if selector == 0:
             verifieddata = certificate
@@ -37,19 +45,19 @@ def verify_tlsa_record(resolver, record, certificate):
 
         if matching == 0:
             if verifieddata == data:
-                print("success")
+                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0])
                 return 0
         elif matching == 1:
             if hashlib.sha256(verifieddata).digest() == data:
-                print("success")
+                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0].decode())
                 return 0
         elif matching == 2:
             if hashlib.sha512(verifieddata).digest() == data:
-                print("success")
+                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0].decode())
                 return 0
         else:
             # currently only 0, 1 and 2 are assigned
-            sys.stderr.write("Only matching types 0, 1 and 2 supported\n")
+            logging.warning("Only matching types 0, 1 and 2 supported\n")
 
-    sys.stderr.write("could not verify any tlsa record\n")
-    return -1
+    logging.error("could not verify any tlsa record\n")
+    return 2
