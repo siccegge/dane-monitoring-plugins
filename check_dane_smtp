@@ -13,6 +13,7 @@ from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED, cert_time_to_second
 from unbound import ub_ctx, idn2dname, ub_strerror
 
 from check_dane.tlsa import verify_tlsa_record
+from check_dane.cert import verify_certificate, add_certificate_options
 
 def init_connection(sslcontext, args):
     host = args.Host
@@ -96,6 +97,8 @@ def main():
     group.add_argument("-4", "--4", action="store_true", help="check via IPv4 only")
     group.add_argument("--64", action="store_false", help="check via IPv4 and IPv6 (default)")
 
+    add_certificate_options(parser)
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -117,7 +120,9 @@ def main():
         logging.error("Connection refused")
         return 2
 
-    retval = verify_tlsa_record(resolver, "_%d._tcp.%s" % (port, host), connection.getpeercert(binary_form=True))
+    retval = verify_certificate(connection.getpeercert(), args)
+    nretval = verify_tlsa_record(resolver, "_%d._tcp.%s" % (port, host), connection.getpeercert(binary_form=True))
+    retval = max(retval, nretval)
 
     close_connection(connection)
     return retval
