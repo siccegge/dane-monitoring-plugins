@@ -15,6 +15,7 @@ except ImportError:
     RR_TYPE_TLSA = 52
 
 def verify_tlsa_record(resolver, record, certificate):
+    logging.debug("searching for TLSA record on %s", record)
     s, r = resolver.resolve(record, rrtype=RR_TYPE_TLSA)
     if 0 != s:
         ub_strerror(s)
