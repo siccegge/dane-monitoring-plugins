@@ -20,7 +20,8 @@ processed by mail as well as on both platforms.
 # Dependencies
 
 The plugins need pyasn1, pyasn1-modules and pyunbound as well as
-python3. Unfortunately the unbound package in Debian only provides
+python3. The check_dnssec module needs additionally the python ldns
+module. Unfortunately the unbound package in Debian only provides
 python2 modules currently. Building pyunbound from source works fine
 however.
 
