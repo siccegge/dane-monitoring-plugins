@@ -24,6 +24,12 @@ def init_connection(sslcontext, args):
         connection = sslcontext.wrap_socket(socket(AF_INET),
                                             server_hostname=host)
         connection.connect((host, port))
+        answer = connection.recv(512)
+        logging.debug(answer)
+
+        connection.send(b"EHLO localhost\r\n")
+        answer = connection.recv(512)
+        logging.debug(answer)
 
     else:
         port = 25 if args.port == 0 else args.port
@@ -42,6 +48,10 @@ def init_connection(sslcontext, args):
 
         connection = sslcontext.wrap_socket(connection, server_hostname=host)
         connection.do_handshake()
+
+        connection.send(b"EHLO localhost\r\n")
+        answer = connection.recv(512)
+        logging.debug(answer)
 
     return connection
 
