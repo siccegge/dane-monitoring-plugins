@@ -7,13 +7,12 @@ import logging
 
 from .cert import get_spki
 
-from unbound import RR_TYPE_A, RR_TYPE_AAAA
-from unbound import idn2dname, ub_strerror
+from unbound import ub_strerror
 
 try:
     from unbound import RR_TYPE_TLSA
 except ImportError:
-    RR_TYPE_TLSA=52
+    RR_TYPE_TLSA = 52
 
 def verify_tlsa_record(resolver, record, certificate):
     s, r = resolver.resolve(record, rrtype=RR_TYPE_TLSA)
@@ -45,15 +44,18 @@ def verify_tlsa_record(resolver, record, certificate):
 
         if matching == 0:
             if verifieddata == data:
-                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0])
+                logging.info("Found matching record: `TLSA %d %d %d %s`",
+                             usage, selector, matching, hexencoder(data)[0])
                 return 0
         elif matching == 1:
             if hashlib.sha256(verifieddata).digest() == data:
-                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0].decode())
+                logging.info("Found matching record: `TLSA %d %d %d %s`",
+                             usage, selector, matching, hexencoder(data)[0].decode())
                 return 0
         elif matching == 2:
             if hashlib.sha512(verifieddata).digest() == data:
-                logging.info("Found matching record: `TLSA %d %d %d %s`", usage, selector, matching, hexencoder(data)[0].decode())
+                logging.info("Found matching record: `TLSA %d %d %d %s`",
+                             usage, selector, matching, hexencoder(data)[0].decode())
                 return 0
         else:
             # currently only 0, 1 and 2 are assigned

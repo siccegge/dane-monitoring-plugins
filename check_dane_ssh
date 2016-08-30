@@ -16,7 +16,7 @@ import paramiko
 try:
     from unbound import RR_TYPE_SSHFP
 except ImportError:
-    RR_TYPE_SSHFP=44
+    RR_TYPE_SSHFP = 44
 
 
 class HostKeyMatchSSHFP(BaseException):
@@ -58,22 +58,30 @@ class HostKeyLookup(paramiko.client.MissingHostKeyPolicy):
             elif hashtype == 2:
                 actualhash = hashlib.sha256(actualhostkey).digest()
             else:
-                logging.warn("Only hashtypes 1 and 2 supported")
+                logging.warning("Only hashtypes 1 and 2 supported")
 
             if keytype == 1 and actualkeytype == 'ssh-rsa':
                 if data == actualhash:
+                    logging.info("Found matching record: `SSHFP %d %d %s`",
+                                 keytype, hashtype, hexencoder(data)[0].decode())
                     raise HostKeyMatchSSHFP
 
             elif keytype == 2 and actualkeytype == 'ssh-dss':
                 if data == actualhash:
+                    logging.info("Found matching record: `SSHFP %d %d %s`",
+                                 keytype, hashtype, hexencoder(data)[0].decode())
                     raise HostKeyMatchSSHFP
 
             elif keytype == 3 and actualkeytype == 'ssh-ecdsa':
                 if data == actualhash:
+                    logging.info("Found matching record: `SSHFP %d %d %s`",
+                                 keytype, hashtype, hexencoder(data)[0].decode())
                     raise HostKeyMatchSSHFP
 
             elif keytype == 4 and actualkeytype == 'ssh-ed25519':
                 if data == actualhash:
+                    logging.info("Found matching record: `SSHFP %d %d %s`",
+                                 keytype, hashtype, hexencoder(data)[0].decode())
                     raise HostKeyMatchSSHFP
 
         logging.error("No matching SSHFP record found")

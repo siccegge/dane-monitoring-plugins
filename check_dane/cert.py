@@ -26,7 +26,7 @@ def verify_certificate(cert, args):
         logging.error("expires in %8s,%16s", deltastr[0], deltastr[1])
         return 2
     elif delta.days < args.warndays:
-        logging.warn("expires in %8s,%16s", deltastr[0], deltastr[1])
+        logging.warning("expires in %8s,%16s", deltastr[0], deltastr[1])
         return 1
 
     return 0
