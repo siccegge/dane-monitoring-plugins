@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 
 from unbound import ub_ctx, ub_strerror
-from unbound import RR_TYPE_A, RR_TYPE_AAAA, RR_TYPE_RRSIG
+from unbound import RR_TYPE_A, RR_TYPE_AAAA, RR_TYPE_RRSIG, RR_TYPE_SRV
 
 from ldns import ldns_wire2pkt
 from ldns import LDNS_SECTION_ANSWER
@@ -62,6 +62,16 @@ def dnssec_verify_rrsig_validity(data, warn=-1, critical=0):
     elif stillvalid.days < warn:
         logging.warning("expires in %8s,%16s", deltastr[0], deltastr[1])
         return 1
+
+
+def srv_lookup(name, resolver):
+    retval = []
+    result = resolver.resolve(name, rrtype=RR_TYPE_SRV)
+    for bytevalue in result.data.raw:
+        priority, weight, port = struct.unpack("!HHH", bytevalue[:6])
+        hostname = '.'.join(result.data.dname2str(bytevalue[6:]))
+        retval.append(((hostname, port), {'priority': priority, 'weight': weight}))
+    return retval
 
 
 class ResolverException(BaseException):
