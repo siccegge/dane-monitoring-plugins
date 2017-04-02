@@ -10,6 +10,9 @@ setup(name='DANE monitoring plugins',
       url='https://git.siccegge.de/?p=dane-monitoring-plugins.git',
       packages=['check_dane'
             ],
-      scripts=['check_dane_smtp'
+      entry_points={
+          'console_scripts': [
+              'check_dane_https = check_dane.https:main',
           ],
+      }
 )
