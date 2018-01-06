@@ -2,18 +2,14 @@
 
 from __future__ import print_function
 
-import sys
 import argparse
 import logging
 
+from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED
 from socket import socket
 
-from check_dane.tlsa import get_tlsa_records, match_tlsa_records
-from check_dane.cert import verify_certificate, add_certificate_options
+from check_dane.cert import add_certificate_options
 from check_dane.abstract import DaneChecker
-
-
-from ssl import SSLContext, PROTOCOL_TLSv1_2, CERT_REQUIRED
 
 
 class HttpsDaneChecker(DaneChecker):
@@ -30,34 +26,36 @@ class HttpsDaneChecker(DaneChecker):
 
     @property
     def port(self):
-        return 443
+        return self._port
 
-    
+
     def _close_connection(self, connection):
         connection.close()
 
-        
+
     def __init__(self):
         DaneChecker.__init__(self)
 
 
     def set_args(self, args):
         DaneChecker.set_args(self, args)
-        
+
+        self._port = args.port
+
         sslcontext = SSLContext(PROTOCOL_TLSv1_2)
         sslcontext.verify_mode = CERT_REQUIRED
         sslcontext.load_verify_locations(args.castore)
 
         self._sslcontext = sslcontext
 
-        
+
     def generate_menu(self, argparser):
         DaneChecker.generate_menu(self, argparser)
         argparser.add_argument("-p", "--port",
                                action="store", type=int, default=443,
                                help="HTTPS port")
 
-        
+
 
 
 def main():
@@ -80,8 +78,9 @@ def main():
         logging.getLogger().setLevel(logging.WARNING)
     else:
         logging.getLogger().setLevel(logging.INFO)
-    
+
     return checker.check()
+
 
 if __name__ == '__main__':
     import sys

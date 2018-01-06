@@ -95,18 +95,17 @@ def get_tlsa_records(resolver, name):
         return
 
     if r.data is None:
-        logging.warn("No TLSA record returned")
+        logging.warning("No TLSA record returned")
         return set()
 
     result = set()
     for record in r.data.data:
-        hexencoder = codecs.getencoder('hex')
-        usage = ord(record[0])
-        selector = ord(record[1])
-        matching = ord(record[2])
+        usage = record[0]
+        selector = record[1]
+        matching = record[2]
         data = record[3:]
         result.add(TLSARecord(usage, selector, matching, data))
-
+        
     return result
 
 
@@ -131,7 +130,7 @@ def match_tlsa_records(records, certificates):
 
     for record in records:
         if not record in usedrecords:
-            logging.warn("Unused record %s", record)
+            logging.warning("Unused record %s", record)
             if result == 0:
                 result = 1
 
