@@ -1,0 +1,53 @@
+Source: dane-monitoring-plugins
+Section: admin
+Priority: optional
+Maintainer: Christoph Egger <christoph@debian.org>
+Build-Depends:
+ debhelper (>= 10~),
+ dh-python,
+ python3,
+# python3-ldns,
+ python3-pyasn1,
+ python3-pyasn1-modules,
+ python3-setuptools,
+ python3-unbound
+Standards-Version: 4.1.1
+Rules-Requires-Root: no
+
+Package: dane-monitoring-plugins
+Architecture: all
+Depends:
+ python3-dane-monitoring-plugins,
+ ${misc:Depends},
+ ${python3:Depends},
+ ${shlibs:Depends}
+Description: manual tiling window manager for X11
+ In herbstluftwm the layout is based on splitting frames into
+ subframes which can be split again or can be filled with windows,
+ Tags (or workspaces or virtual desktops or ...) can be added/removed
+ at runtime. Each tag contains an own layout and exactly one tag is
+ viewed on each monitor. The tags are monitor independent.
+ .
+ It is configured at runtime via ipc calls from herbstclient. So the
+ configuration file is just a script which is run on startup.
+
+Package: python3-dane-monitoring-plugins
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${python3:Depends},
+ ${shlibs:Depends},
+ python3-ldns,
+ python3-pyasn1,
+ python3-pyasn1-modules,
+ python3-setuptools,
+ python3-unbound
+Description: manual tiling window manager for X11
+ In herbstluftwm the layout is based on splitting frames into
+ subframes which can be split again or can be filled with windows,
+ Tags (or workspaces or virtual desktops or ...) can be added/removed
+ at runtime. Each tag contains an own layout and exactly one tag is
+ viewed on each monitor. The tags are monitor independent.
+ .
+ It is configured at runtime via ipc calls from herbstclient. So the
+ configuration file is just a script which is run on startup.

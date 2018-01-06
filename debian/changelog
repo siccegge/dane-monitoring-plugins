@@ -1,0 +1,5 @@
+dane-monitoring-plugins (0.1) siccegge-stretch; urgency=medium
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Christoph Egger <christoph@debian.org>  Sat, 06 Jan 2018 18:25:00 +0100
